@@ -1,0 +1,42 @@
+-- Lenta model frame: treatment = SMS group 'test', target = store visit (response_att).
+-- Ages outside 14-100 are treated as missing. Heavy-tailed counts use LN(1 + x).
+-- Remaining NULLs are filled at training time with medians from the training split.
+CREATE OR REPLACE TABLE {{P}}_FRAME AS
+SELECT
+    client_id,
+    CAST(CASE WHEN grp = 'test' THEN 1 ELSE 0 END AS DECIMAL(1,0))           AS treatment,
+    CAST(response_att AS DECIMAL(1,0))                                       AS target,
+    CASE WHEN age BETWEEN 14 AND 100 THEN age END                            AS age,
+    CAST(CASE WHEN age BETWEEN 14 AND 100 THEN 0 ELSE 1 END AS DOUBLE)       AS age_missing,
+    CAST(CASE WHEN gender = 'F' THEN 1 ELSE 0 END AS DOUBLE)                 AS gender_f,
+    CAST(CASE WHEN gender = 'M' THEN 1 ELSE 0 END AS DOUBLE)                 AS gender_m,
+    children,
+    CAST(main_format AS DOUBLE)                                              AS main_format,
+    months_from_register,
+    response_sms,
+    response_viber,
+    food_share_15d,
+    food_share_1m,
+    promo_share_15d,
+    mean_discount_depth_15d,
+    stdev_discount_depth_15d,
+    k_var_discount_depth_15d,
+    k_var_cheque_15d,
+    k_var_cheque_3m,
+    k_var_cheque_category_width_15d,
+    k_var_days_between_visits_15d,
+    k_var_days_between_visits_1m,
+    k_var_days_between_visits_3m,
+    k_var_sku_per_cheque_15d,
+    stdev_days_between_visits_15d,
+    perdelta_days_between_visits_15_30d,
+    CAST(CASE WHEN k_var_cheque_15d IS NULL THEN 1 ELSE 0 END AS DOUBLE)     AS recent15_missing,
+    LN(1 + crazy_purchases_cheque_count_1m)                                  AS crazy_cheques_1m_log,
+    LN(1 + crazy_purchases_cheque_count_3m)                                  AS crazy_cheques_3m_log,
+    LN(1 + crazy_purchases_cheque_count_12m)                                 AS crazy_cheques_12m_log,
+    LN(1 + crazy_purchases_goods_count_12m)                                  AS crazy_goods_12m_log,
+    LN(1 + cheque_count_3m_g20)                                              AS cheque_count_3m_g20_log,
+    LN(1 + cheque_count_12m_g20)                                             AS cheque_count_12m_g20_log,
+    LN(1 + sale_count_3m_g24)                                                AS sale_count_3m_g24_log,
+    LN(1 + sale_count_12m_g32)                                               AS sale_count_12m_g32_log
+FROM {{P}}_RAW;
